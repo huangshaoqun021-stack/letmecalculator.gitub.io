@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上海工伤赔偿计算器</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .calculator-container, .qr-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            flex: 1;
+            min-width: 300px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            width: 100%;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        input:focus, select:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 30px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #3498db;
+        }
+        .result-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-size: 18px;
+        }
+        .result-detail {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #ddd;
+        }
+        .total {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e74c3c;
+            padding-top: 15px;
+            border-top: 2px solid #ddd;
+            margin-top: 15px;
+        }
+        .note {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .payer {
+            font-size: 14px;
+            color: #16a085;
+        }
+        .qr-code {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .qr-code canvas {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background: white;
+        }
+        .qr-title {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>上海工伤赔偿计算器</h1>
+    
+    <div class="container">
+        <div class="calculator-container">
+            <div class="input-group">
+                <label for="salary">负伤前12个月平均工资（元）</label>
+                <input type="number" id="salary" placeholder="请输入月平均工资" min="0">
+            </div>
+            
+            <div class="input-group">
+                <label for="grade">伤残等级</label>
+                <select id="grade">
+                    <option value="7">7级</option>
+                    <option value="8">8级</option>
+                    <option value="9">9级</option>
+                    <option value="10">10级</option>
+                </select>
+            </div>
+            
+            <button onclick="calculate()">计算赔偿金额</button>
+            
+            <div id="results" style="display: none;">
+                <div class="result-card">
+                    <div class="result-title">一次性伤残补助金</div>
+                    <div class="result-detail">
+                        <span>计算方式：</span>
+                        <span id="disability-detail"></span>
+                    </div>
+                    <div class="result-detail">
+                        <span>金额：</span>
+                        <span id="disability-amount"></span>
+                    </div>
+                    <div class="payer" id="disability-payer"></div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">一次性工伤医疗补助金</div>
+                    <div class="result-detail">
+                        <span>计算方式：</span>
+                        <span id="medical-detail"></span>
+                    </div>
+                    <div class="result-detail">
+                        <span>金额：</span>
+                        <span id="medical-amount"></span>
+                    </div>
+                    <div class="payer" id="medical-payer"></div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">一次性伤残就业补助金</div>
+                    <div class="result-detail">
+                        <span>计算方式：</span>
+                        <span id="employment-detail"></span>
+                    </div>
+                    <div class="result-detail">
+                        <span>金额：</span>
+                        <span id="employment-amount"></span>
+                    </div>
+                    <div class="payer" id="employment-payer"></div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-detail total">
+                        <span>赔偿总额：</span>
+                        <span id="total-amount"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="instructions">
+                <h3>使用说明</h3>
+                <p>1. 输入负伤前12个月的平均工资</p>
+                <p>2. 选择伤残等级（7-10级）</p>
+                <p>3. 点击"计算赔偿金额"按钮查看结果</p>
+                <p>4. 使用右侧二维码分享此计算器</p>
+            </div>
+        </div>
+        
+        <div class="qr-container">
+            <div class="qr-title">分享二维码</div>
+            <div class="qr-code">
+                <canvas id="qr-canvas"></canvas>
+            </div>
+            <div class="instructions">
+                <h3>计算标准说明</h3>
+                <p>• 一次性伤残补助金：由工伤保险基金支付</p>
+                <p>• 一次性工伤医疗补助金：由工伤保险基金支付</p>
+                <p>• 一次性伤残就业补助金：由用人单位支付</p>
+                <p>• 上年度全市职工月平均工资：12307元/月</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 上年度全市职工月平均工资
+        const averageSalary = 12307;
+        
+        // 生成二维码
+        function generateQRCode() {
+            const url = window.location.href;
+            const canvas = document.getElementById('qr-canvas');
+            
+            QRCode.toCanvas(canvas, url, {
+                width: 200,
+                margin: 1,
+                color: {
+                    dark: '#2c3e50',
+                    light: '#ffffff'
+                }
+            }, function(error) {
+                if (error) console.error(error);
+            });
+        }
+        
+        // 页面加载时生成二维码
+        window.onload = function() {
+            generateQRCode();
+        };
+        
+        function calculate() {
+            // 获取用户输入
+            const salary = parseFloat(document.getElementById('salary').value);
+            const grade = document.getElementById('grade').value;
+            
+            // 验证输入
+            if (isNaN(salary) || salary <= 0) {
+                alert('请输入有效的月平均工资');
+                return;
+            }
+            
+            // 定义各伤残等级对应的月份数
+            const disabilityMonths = {
+                '7': 12,
+                '8': 11,
+                '9': 9,
+                '10': 7
+            };
+            
+            const subsidyMonths = {
+                '7': 12,
+                '8': 9,
+                '9': 6,
+                '10': 3
+            };
+            
+            // 计算各项赔偿
+            const disabilityAmount = salary * disabilityMonths[grade];
+            const medicalAmount = averageSalary * subsidyMonths[grade];
+            const employmentAmount = averageSalary * subsidyMonths[grade];
+            const totalAmount = disabilityAmount + medicalAmount + employmentAmount;
+            
+            // 显示计算结果
+            document.getElementById('disability-detail').textContent = 
+                `${salary}元 × ${disabilityMonths[grade]}个月`;
+            document.getElementById('disability-amount').textContent = 
+                `${disabilityAmount.toFixed(2)}元`;
+            document.getElementById('disability-payer').textContent = 
+                '由工伤保险基金支付';
+            
+            document.getElementById('medical-detail').textContent = 
+                `${averageSalary}元 × ${subsidyMonths[grade]}个月`;
+            document.getElementById('medical-amount').textContent = 
+                `${medicalAmount.toFixed(2)}元`;
+            document.getElementById('medical-payer').textContent = 
+                '由工伤保险基金支付';
+            
+            document.getElementById('employment-detail').textContent = 
+                `${averageSalary}元 × ${subsidyMonths[grade]}个月`;
+            document.getElementById('employment-amount').textContent = 
+                `${employmentAmount.toFixed(2)}元`;
+            document.getElementById('employment-payer').textContent = 
+                '由用人单位支付';
+            
+            document.getElementById('total-amount').textContent = 
+                `${totalAmount.toFixed(2)}元`;
+            
+            // 显示结果区域
+            document.getElementById('results').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
