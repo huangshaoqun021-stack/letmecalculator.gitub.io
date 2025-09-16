@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上海工伤赔偿计算器</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .calculator-container, .qr-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            flex: 1;
+            min-width: 300px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            width: 100%;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .input-hint {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 4px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        input:focus, select:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        input.error {
+            border-color: #e74c3c;
+        }
+        .error-message {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 30px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #3498db;
+        }
+        .result-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-size: 18px;
+        }
+        .result-detail {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #ddd;
+        }
+        .total {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e74c3c;
+            padding-top: 15px;
+            border-top: 2px solid #ddd;
+            margin-top: 15px;
+        }
+        .note {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .payer {
+            font-size: 14px;
+            color: #16a085;
+        }
+        .qr-code {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .qr-code canvas {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background: white;
+        }
+        .qr-title {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .salary-range {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        .date-inputs {
+            display: flex;
+            gap: 15px;
+        }
+        .date-inputs .input-group {
+            flex: 1;
+        }
+        .info-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .info-box p {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .date-inputs {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>上海工伤赔偿计算器</h1>
+    
+    <div class="container">
+        <div class="calculator-container">
+            <div class="input-group">
+                <label for="salary">负伤前12个月平均工资（元）</label>
+                <input type="number" id="salary" placeholder="请输入月平均工资" min="0">
+                <div class="salary-range">
+                    <span>伤残待遇下限: 7,384元</span>
+                    <span>上限: 36,921元</span>
+                </div>
+                <div class="salary-range">
+                    <span>停工留薪期待遇下限: 2,740元</span>
+                </div>
+                <div class="error-message" id="salary-error">请输入有效的月平均工资</div>
+            </div>
+            
+            <div class="input-group">
+                <label for="grade">伤残等级</label>
+                <select id="grade">
+                    <option value="7">7级</option>
+                    <option value="8">8级</option>
+                    <option value="9">9级</option>
+                    <option value="10">10级</option>
+                </select>
+            </div>
+            
+            <div class="info-box">
+                <p><strong>停工留薪期说明：</strong>上海地区的停工留薪期以"职工因工作遭受事故伤害或者患职业病需要暂停工作接受工伤医疗时"为起始日，以"就医记录或病情证明单中记载的医疗期或休息期结束之日"为截止日，但伤残等级鉴定结论作出之日更早的，以"伤残等级鉴定结论作出之日"为截止日。</p>
+            </div>
+            
+            <div class="date-inputs">
+                <div class="input-group">
+                    <label for="start-date">停工留薪期开始日期</label>
+                    <input type="date" id="start-date">
+                </div>
+                
+                <div class="input-group">
+                    <label for="end-date">停工留薪期结束日期</label>
+                    <input type="date" id="end-date">
+                </div>
+            </div>
+            
+            <div class="error-message" id="date-error">请输入有效的日期范围</div>
+            
+            <button id="calculate-btn" onclick="calculate()">计算赔偿金额</button>
+            
+            <div id="results" style="display: none;">
+                <div class="result-card">
+                    <div class="result-title">停工留薪期待遇</div>
+                    <div class="result-detail">
+                        <span>停工留薪期：</span>
+                        <span id="leave-period"></span>
+                    </div>
+                    <div class="result-detail">
+                        <span>计算方式：</span>
+                        <span id="leave-detail"></span>
+                    </div>
+                    <div class="result-detail">
+                        <span>金额：</span>
+                        <span id="leave-amount"></span>
+                    </div>
+                    <div class="payer" id="leave-payer"></div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">一次性伤残补助金</div>
+                    <div class="result-detail">
+                        <span>计算方式：</span>
+                        <span id="disability-detail"></span>
+                    </div>
+                    <div class="result-detail">
+                        <span>金额：</span>
+                        <span id="disability-amount"></span>
+                    </div>
+                    <div class="payer" id="disability-payer"></div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">一次性工伤医疗补助金</div>
+                    <div class="result-detail">
+                        <span>计算方式：</span>
+                        <span id="medical-detail"></span>
+                    </div>
+                    <div class="result-detail">
+                        <span>金额：</span>
+                        <span id="medical-amount"></span>
+                    </div>
+                    <div class="payer" id="medical-payer"></div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">一次性伤残就业补助金</div>
+                    <div class="result-detail">
+                        <span>计算方式：</span>
+                        <span id="employment-detail"></span>
+                    </div>
+                    <div class="result-detail">
+                        <span>金额：</span>
+                        <span id="employment-amount"></span>
+                    </div>
+                    <div class="payer" id="employment-payer"></div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-detail total">
+                        <span>赔偿总额：</span>
+                        <span id="total-amount"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="instructions">
+                <h3>使用说明</h3>
+                <p>1. 输入负伤前12个月的平均工资</p>
+                <p>2. 选择伤残等级（7-10级）</p>
+                <p>3. 输入停工留薪期开始和结束日期</p>
+                <p>4. 点击"计算赔偿金额"按钮查看结果</p>
+                <p>5. 使用右侧二维码分享此计算器</p>
+            </div>
+        </div>
+        
+        <div class="qr-container">
+            <div class="qr-title">分享二维码</div>
+            <div class="qr-code">
+                <canvas id="qr-canvas"></canvas>
+            </div>
+            <div class="instructions">
+                <h3>计算标准说明</h3>
+                <p>• 停工留薪期待遇：由用人单位支付</p>
+                <p>• 一次性伤残补助金：由工伤保险基金支付</p>
+                <p>• 一次性工伤医疗补助金：由工伤保险基金支付</p>
+                <p>• 一次性伤残就业补助金：由用人单位支付</p>
+                <p>• 上年度全市职工月平均工资：12307元/月</p>
+                <p>• 月计薪天数：21.75天</p>
+                <p>• 上海市最低工资标准：2740元/月</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 常量定义
+        const AVERAGE_SALARY = 12307;
+        const MIN_SALARY = 7384;
+        const MAX_SALARY = 36921;
+        const MIN_LEAVE_SALARY = 2740; // 上海市最低工资标准
+        const MONTHLY_WORKING_DAYS = 21.75; // 月计薪天数
+        
+        // 生成二维码
+        function generateQRCode() {
+            const url = window.location.href;
+            const canvas = document.getElementById('qr-canvas');
+            
+            QRCode.toCanvas(canvas, url, {
+                width: 200,
+                margin: 1,
+                color: {
+                    dark: '#2c3e50',
+                    light: '#ffffff'
+                }
+            }, function(error) {
+                if (error) console.error(error);
+            });
+        }
+        
+        // 设置日期输入框的默认值
+        function setDefaultDates() {
+            const today = new Date();
+            const endDateInput = document.getElementById('end-date');
+            const startDateInput = document.getElementById('start-date');
+            
+            // 设置结束日期为今天
+            const todayFormatted = today.toISOString().split('T')[0];
+            endDateInput.value = todayFormatted;
+            
+            // 设置开始日期为30天前
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+            const thirtyDaysAgoFormatted = thirtyDaysAgo.toISOString().split('T')[0];
+            startDateInput.value = thirtyDaysAgoFormatted;
+        }
+        
+        // 验证工资输入
+        function validateSalary() {
+            const salaryInput = document.getElementById('salary');
+            const errorElement = document.getElementById('salary-error');
+            const calculateBtn = document.getElementById('calculate-btn');
+            let isValid = true;
+            
+            const salary = parseFloat(salaryInput.value);
+            
+            if (isNaN(salary) || salary <= 0) {
+                showError(salaryInput, errorElement, '请输入有效的月平均工资');
+                isValid = false;
+            } else {
+                hideError(salaryInput, errorElement);
+            }
+            
+            calculateBtn.disabled = !isValid;
+            return isValid;
+        }
+        
+        // 验证日期输入
+        function validateDates() {
+            const startDateInput = document.getElementById('start-date');
+            const endDateInput = document.getElementById('end-date');
+            const errorElement = document.getElementById('date-error');
+            const calculateBtn = document.getElementById('calculate-btn');
+            let isValid = true;
+            
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            
+            if (!startDateInput.value || !endDateInput.value || startDate >= endDate) {
+                showError(startDateInput, errorElement, '请输入有效的日期范围，开始日期必须早于结束日期');
+                endDateInput.classList.add('error');
+                isValid = false;
+            } else {
+                hideError(startDateInput, errorElement);
+                endDateInput.classList.remove('error');
+            }
+            
+            calculateBtn.disabled = !isValid;
+            return isValid;
+        }
+        
+        function showError(input, errorElement, message) {
+            input.classList.add('error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        function hideError(input, errorElement) {
+            input.classList.remove('error');
+            errorElement.style.display = 'none';
+        }
+        
+        // 获取经过范围限制的工资值（用于伤残待遇计算）
+        function getAdjustedSalary() {
+            const salary = parseFloat(document.getElementById('salary').value);
+            
+            if (salary < MIN_SALARY) {
+                return MIN_SALARY;
+            } else if (salary > MAX_SALARY) {
+                return MAX_SALARY;
+            }
+            
+            return salary;
+        }
+        
+        // 获取经过范围限制的工资值（用于停工留薪期待遇计算）
+        function getAdjustedLeaveSalary() {
+            const salary = parseFloat(document.getElementById('salary').value);
+            
+            if (salary < MIN_LEAVE_SALARY) {
+                return MIN_LEAVE_SALARY;
+            }
+            
+            return salary;
+        }
+        
+        // 计算两个日期之间的天数差
+        function calculateDaysBetweenDates(startDate, endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const timeDiff = end.getTime() - start.getTime();
+            return Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // 包括开始和结束日期
+        }
+        
+        // 格式化日期显示
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+        }
+        
+        function calculate() {
+            if (!validateSalary() || !validateDates()) return;
+            
+            // 获取用户输入
+            const adjustedSalary = getAdjustedSalary();
+            const adjustedLeaveSalary = getAdjustedLeaveSalary();
+            const grade = document.getElementById('grade').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            
+            // 计算停工留薪期天数
+            const leaveDays = calculateDaysBetweenDates(startDate, endDate);
+            
+            // 定义各伤残等级对应的月份数
+            const disabilityMonths = {
+                '7': 12,
+                '8': 11,
+                '9': 9,
+                '10': 7
+            };
+            
+            const subsidyMonths = {
+                '7': 12,
+                '8': 9,
+                '9': 6,
+                '10': 3
+            };
+            
+            // 计算各项赔偿
+            const leaveAmount = (adjustedLeaveSalary / MONTHLY_WORKING_DAYS * leaveDays).toFixed(2);
+            const disabilityAmount = adjustedSalary * disabilityMonths[grade];
+            const medicalAmount = AVERAGE_SALARY * subsidyMonths[grade];
+            const employmentAmount = AVERAGE_SALARY * subsidyMonths[grade];
+            const totalAmount = parseFloat(leaveAmount) + disabilityAmount + medicalAmount + employmentAmount;
+            
+            // 显示计算结果 - 停工留薪期待遇
+            document.getElementById('leave-period').textContent = 
+                `${formatDate(startDate)} 至 ${formatDate(endDate)} (共${leaveDays}天)`;
+            document.getElementById('leave-detail').textContent = 
+                `${adjustedLeaveSalary.toLocaleString()}元 ÷ ${MONTHLY_WORKING_DAYS}天 × ${leaveDays}天`;
+            document.getElementById('leave-amount').textContent = 
+                `${parseFloat(leaveAmount).toLocaleString(undefined, {maximumFractionDigits: 2})}元`;
+            document.getElementById('leave-payer').textContent = 
+                '由用人单位支付';
+            
+            // 显示计算结果 - 伤残待遇
+            document.getElementById('disability-detail').textContent = 
+                `${adjustedSalary.toLocaleString()}元 × ${disabilityMonths[grade]}个月`;
+            document.getElementById('disability-amount').textContent = 
+                `${disabilityAmount.toLocaleString(undefined, {maximumFractionDigits: 2})}元`;
+            document.getElementById('disability-payer').textContent = 
+                '由工伤保险基金支付';
+            
+            document.getElementById('medical-detail').textContent = 
+                `${AVERAGE_SALARY.toLocaleString()}元 × ${subsidyMonths[grade]}个月`;
+            document.getElementById('medical-amount').textContent = 
+                `${medicalAmount.toLocaleString(undefined, {maximumFractionDigits: 2})}元`;
+            document.getElementById('medical-payer').textContent = 
+                '由工伤保险基金支付';
+            
+            document.getElementById('employment-detail').textContent = 
+                `${AVERAGE_SALARY.toLocaleString()}元 × ${subsidyMonths[grade]}个月`;
+            document.getElementById('employment-amount').textContent = 
+                `${employmentAmount.toLocaleString(undefined, {maximumFractionDigits: 2})}元`;
+            document.getElementById('employment-payer').textContent = 
+                '由用人单位支付';
+            
+            document.getElementById('total-amount').textContent = 
+                `${totalAmount.toLocaleString(undefined, {maximumFractionDigits: 2})}元`;
+            
+            // 显示结果区域
+            document.getElementById('results').style.display = 'block';
+        }
+        
+        // 页面加载时初始化
+        window.onload = function() {
+            generateQRCode();
+            setDefaultDates();
+            
+            // 添加输入验证事件监听
+            document.getElementById('salary').addEventListener('input', validateSalary);
+            document.getElementById('salary').addEventListener('blur', validateSalary);
+            
+            document.getElementById('start-date').addEventListener('change', validateDates);
+            document.getElementById('end-date').addEventListener('change', validateDates);
+            
+            // 初始禁用计算按钮
+            document.getElementById('calculate-btn').disabled = true;
+        };
+    </script>
+</body>
+</html>
